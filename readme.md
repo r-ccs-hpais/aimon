@@ -49,14 +49,14 @@ Threat model: the model server stack is assumed compromised; it must not be able
 
 # Links
 
-- AIMON --> https://github.com/r-ccs-hpais/aimon
 - R4 --> https://github.com/R-CCS-HPBD/r4
 - UMRS --> https://github.com/UMRS-org/umrs/
 - mini-RiVault --> https://github.com/RIKEN-RCCS/RiVault
+- AIMON --> https://github.com/r-ccs-hpais/aimon
 
 # Authors
 
-- Emmanuel JEANNOT: Backend/Server -- [UMRS](https://github.com/UMRS-org/umrs/)
 - Kento SATO, Masaru NAGASO: Client/frontend -- [R4](https://github.com/R-CCS-HPBD/r4)
+- Emmanuel JEANNOT: Backend/Server -- [UMRS](https://github.com/UMRS-org/umrs/)
 - Jens DOMKE: AI model serving -- mini-[RiVault](https://github.com/RIKEN-RCCS/RiVault)
-- Mohamed WAHIB, Emil VATAI: Models (+ assist on other parts)
+- Mohamed WAHIB, Emil VATAI: Models and Applications
