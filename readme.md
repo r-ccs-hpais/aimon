@@ -6,7 +6,7 @@
 
 AI for science should be ambient: models run automatically as scientific data (e.g. from facilities such as SPring-8) arrives on the supercomputer Rikyu (e.g. at R-CCS), and their outputs are queryable at any time.
 
-![AIMON platform overview: client, Platform Gateway, UMRS server, storage, and the mini-RiVault sandbox on a Slurm compute node](figs/overview.png)
+![AIMON overview: client, secure gateway, server (UMRS), storage and database, AI models, and the mini-RiVault sandbox on the supercomputer, with the five steps of using AIMON](figs/overview.png)
 
 ## Components
 

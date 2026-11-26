@@ -15,6 +15,8 @@
   \tikz[baseline=(badge.base)]
     \node[circle, fill=., text=white, font=\small\bfseries, inner sep=1.5pt,
           minimum size=4.6mm] (badge) {#1};}
+% A step badge followed by its text; further lines align with the first, not under the badge.
+\newcommand{\steplabel}[2]{\step{#1}\ \begin{tabular}[t]{@{}l@{}}#2\end{tabular}}
 \newcommand{\boxtitle}[1]{\textbf{#1}\\[2pt]}
 
 \tikzset{
@@ -32,59 +34,48 @@
 
 \begin{document}
 \begin{tikzpicture}
-  % Top row: the request path.
+  % Top row: from the scientist to the server.
   \node[component=client] (client) at (0, 0)
-    {\boxtitle{Client\\For example: SPring-8}web GUI, \texttt{r4} CLI/SDK\\files, instrument data};
+    {\boxtitle{Client\\For example: SPring-8}scientists upload data\\with the \texttt{r4} tool};
   \node[component=gateway] (gateway) at (6.2, 0)
-    {\boxtitle{Platform Gateway}NGINX + auth sidecar\\JWT check, rate limits\\request-ID audit};
+    {\boxtitle{Secure gateway}single entry point\\checks every user};
   \node[component=server] (umrs) at (12.4, 0)
-    {\boxtitle{UMRS server}cluster front-end\\accounts, quotas, projects\\durable jobs\\model registry};
+    {\boxtitle{Server (UMRS)}knows users and projects\\starts the AI work\\automatically};
 
-  % Middle row: storage.
-  \node[storage] (models) at (1.6, -4.3)
-    {\boxtitle{Pre-staged model store}weights never download\\at runtime};
-  \node[storage] (s3) at (9.2, -4.3)
-    {\boxtitle{Object storage (S3)}internal-only, project buckets\\per-attempt keyspaces};
+  % Middle row: what the AI work needs and produces.
+  \node[storage] (storage) at (1.6, -4.3)
+    {\boxtitle{Storage and database}uploaded data, results,\\searchable embeddings};
+  \node[storage] (models) at (9.2, -4.3)
+    {\boxtitle{AI models}prepared in advance\\for text, images and files};
 
-  % Bottom row: one sandbox per endpoint/job on a compute node.
-  \node[font=\small\bfseries, text=sandbox!70!black, align=center] (sandbox title) at (6.2, -7.6)
-    {Slurm compute node: one mini-RiVault sandbox per endpoint/job\\
-     offline at boot \,$\cdot$\, fail-closed egress};
-  \node[part] (mounts) at (0.65, -9.1)
-    {\boxtitle{Read-only mounts}weights, project data,\\RAG index};
-  \node[part] (scratch) at (6.2, -9.1)
-    {\boxtitle{Writable: tmpfs /scratch only}ephemeral per attempt};
-  \node[part] (creds) at (11.75, -9.1)
-    {\boxtitle{Attempt-scoped credentials}no ambient credentials\\on the node};
+  % Bottom row: where the model runs.
+  \node[font=\small\bfseries, text=sandbox!70!black, align=center] (sandbox title) at (6.2, -7.8)
+    {Supercomputer: mini-RiVault runs each AI model in its own isolated sandbox\\
+     no internet access \,$\cdot$\, cleaned up after every job};
+  \node[part] (reads) at (0.65, -9.3)
+    {\boxtitle{Reads only what it needs}the chosen model and data};
+  \node[part] (runs) at (6.2, -9.3)
+    {\boxtitle{Runs the model}on GPU or CPU, on demand};
+  \node[part] (writes) at (11.75, -9.3)
+    {\boxtitle{Writes only the results}to the output destination};
   \node[draw=sandbox, thick, rounded corners=3pt, inner sep=6pt,
-        fit=(sandbox title) (mounts) (scratch) (creds)] (sandbox) {};
+        fit=(sandbox title) (reads) (runs) (writes)] (sandbox) {};
 
-  % Control plane.
-  \draw[flow=gateway] (client) -- (gateway)
-    node[flow label=gateway, midway, above] {HTTPS + JWT}
-    node[flow label=gateway, midway, below] {control};
-  \draw[flow=gateway] (gateway) -- (umrs)
-    node[flow label=gateway, midway, above] {verified}
-    node[flow label=gateway, midway, below] {identity};
-
-  % Data plane.
-  \draw[flow=sandbox] (client.north) |- (6.2, 2) -| (umrs.north);
-  \node[flow label=sandbox, above] at (6.2, 2)
-    {\step{1} ZMQ data plane: CURVE-encrypted, ZAP-authenticated};
-  \draw[flow=server] ([xshift=-14mm]umrs.south) -- ([xshift=-14mm]umrs.south |- s3.north)
-    node[flow label=server, midway, left] {\step{2} server-side staging};
+  % Steps of "How to use AIMON" in the readme.
+  \draw[flow=client] (client) -- (gateway)
+    node[flow label=client, midway, above] {\step{1}}
+    node[flow label=client, midway, below] {upload data};
+  \draw[flow=client] (gateway) -- (umrs);
+  \draw[flow=server] ([xshift=-14mm]umrs.south) -- ++(0, -0.7) -| ([xshift=16mm]storage.north)
+    node[flow label=server, pos=0.25, above] {\steplabel{2}{the upload triggers an event; the data is stored}};
   \draw[flow=gateway] ([xshift=12mm]umrs.south) -- ([xshift=12mm]umrs.south |- sandbox.north)
-    node[flow label=gateway, pos=0.86, left] {\step{3} \texttt{sbatch}: job spec +\\attempt credentials};
-  \draw[flow=server, arrow tip-arrow tip] (s3.south) -- (s3.south |- sandbox.north)
-    node[flow label=server, midway, left] {\step{4} presigned /\\STS access};
+    node[flow label=gateway, pos=0.86, left]
+      {\steplabel{3}{instructions:\\data, model, task,\\output destination}};
+  \draw[flow=sandbox, arrow tip-arrow tip] (storage.south) -- (storage.south |- sandbox.north)
+    node[flow label=sandbox, midway, right] {\steplabel{4}{read data,\\write results}};
   \draw[flow=store] (models.south) -- (models.south |- sandbox.north)
-    node[flow label=store, midway, right] {read-only mount};
-
-  % Results.
-  \draw[flow=client] ([xshift=-17mm]client.south |- sandbox.north) -- ([xshift=-17mm]client.south)
-    node[flow label=client, pos=0.82, right]
-      {\step{5} results $\to$ S3 attempt keyspace\\
-       $\to$ Gateway audited download\\
-       $\to$ TTL URL to client};
+    node[flow label=store, midway, left] {load model};
+  \draw[flow=client] ([xshift=-21mm]storage.north) -- ([xshift=-21mm]storage.north |- client.south)
+    node[flow label=client, midway, right] {\steplabel{5}{query results\\at any time}};
 \end{tikzpicture}
 \end{document}
