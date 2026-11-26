@@ -20,13 +20,13 @@ Reacts to data uploaded to an S3 bucket, calls a suitable model, stores the resu
 
 Serves models (vLLM, BentoML + PyTorch) on demand inside an isolated Slurm job using rootless Podman.
 
-## Pipeline
+## How to use AIMON
 
-1. A scientist uploads data to an S3 bucket (using a client).
-2. The upload triggers an event on the UMRS server.
-3. UMRS sends mini-RiVault the input S3 address, model name, task/prompt, and output S3 bucket.
-4. The model runs inference and writes the result to the whitelisted S3 bucket.
-5. Embeddings are stored in a relational database and can be queried through R4.??????????
+1. A scientist uploads data using an user-friendly client (`r4`).
+2. The upload triggers an event on the server (UMRS).
+3. This sends mini-RiVault the instructions how to access the data, ML model, task/prompt which should be executed, and output destination.
+4. The model runs inference and writes the result to the output destination.
+5. Embeddings are stored in a relational database and can be queried for later use.
 
 ## Key features
 
