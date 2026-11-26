@@ -1,0 +1,31 @@
+\documentclass[tikz, border=0pt]{standalone}
+
+\definecolor{aimonred}{HTML}{C81018}
+
+% Coordinates follow the 128 x 128 grid of the original SVG logo, whose y axis points down.
+\newcommand{\logounit}{0.2mm}
+
+\tikzset{
+  logo stroke/.style={
+    draw=aimonred, line width=6*\logounit, line cap=rect, line join=miter,
+  },
+}
+
+\begin{document}
+\begin{tikzpicture}[x=\logounit, y=-\logounit]
+  \useasboundingbox (0, 0) rectangle (128, 128);
+
+  % Left gate leaf.
+  \draw[logo stroke] (22, 104) -- (22, 22) -- (55, 22) -- (55, 59) -- (22, 59)
+                     (22, 40) -- (55, 40);
+  % Right gate leaf.
+  \draw[logo stroke] (73, 22) -- (106, 22) -- (106, 104)
+                     (73, 22) -- (73, 59) -- (106, 59)
+                     (73, 40) -- (106, 40);
+  % "A".
+  \draw[logo stroke] (45, 100) -- (59, 73) -- (73, 100)
+                     (54, 89) -- (64, 89);
+  % "I".
+  \draw[logo stroke] (85, 70) -- (85, 100);
+\end{tikzpicture}
+\end{document}

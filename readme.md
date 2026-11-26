@@ -1,5 +1,7 @@
 # AIMON
 
+![AIMON logo: the kanji 門 (mon, "gate") with the letters AI inside](figs/logo.png)
+
 **AIMON: Connecting Scientific Data to On-Demand AI on Supercomputers** (RIKEN R-CCS, Inria).
 
 AI for science should be ambient: models run automatically as scientific data (e.g. from facilities such as SPring-8) arrives on the supercomputer Rikyu (e.g. at R-CCS), and their outputs are queryable at any time.
