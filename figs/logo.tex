@@ -15,17 +15,16 @@
 \begin{tikzpicture}[x=\logounit, y=-\logounit]
   \useasboundingbox (0, 0) rectangle (128, 128);
 
-  % Left gate leaf.
-  \draw[logo stroke] (22, 104) -- (22, 22) -- (55, 22) -- (55, 59) -- (22, 59)
-                     (22, 40) -- (55, 40);
-  % Right gate leaf.
-  \draw[logo stroke] (73, 22) -- (106, 22) -- (106, 104)
-                     (73, 22) -- (73, 59) -- (106, 59)
-                     (73, 40) -- (106, 40);
-  % "A".
-  \draw[logo stroke] (45, 100) -- (59, 73) -- (73, 100)
-                     (54, 89) -- (64, 89);
-  % "I".
-  \draw[logo stroke] (85, 70) -- (85, 100);
+  % Left gate leaf and post.
+  \draw[logo stroke] (22, 104) -- (22, 22) -- (53, 22) -- (53, 58) -- (22, 58)
+                     (22, 40) -- (53, 40);
+  % Right gate leaf and post; the post ends in the leftward hook of the kanji.
+  \draw[logo stroke] (75, 22) -- (106, 22) -- (106, 104) -- (96, 104)
+                     (75, 22) -- (75, 58) -- (106, 58)
+                     (75, 40) -- (106, 40);
+  % "A" and "I" fill the place of the inner 日 of 間: centred, clear of the leaves and the ground.
+  \draw[logo stroke] (46, 97) -- (58.5, 72) -- (71, 97)
+                     (54.5, 88) -- (62.5, 88);
+  \draw[logo stroke] (82, 69) -- (82, 97);
 \end{tikzpicture}
 \end{document}
