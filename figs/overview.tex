@@ -1,0 +1,84 @@
+\documentclass[tikz, border=4pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\usepackage{pifont}
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{arrows.meta, fit, positioning}
+
+\definecolor{client}{HTML}{7B4FB3}
+\definecolor{gateway}{HTML}{2F6FD0}
+\definecolor{server}{HTML}{1E8A7A}
+\definecolor{sandbox}{HTML}{3F8F3A}
+\definecolor{store}{HTML}{B07A12}
+
+\newcommand{\step}[1]{\ding{\numexpr171+#1\relax}}
+\newcommand{\boxtitle}[1]{\textbf{#1}\\[2pt]}
+
+\tikzset{
+  component/.style={
+    draw=#1, fill=#1!8, text=black, thick, rounded corners=3pt,
+    align=left, font=\footnotesize, inner sep=5pt,
+    text width=3.7cm, minimum height=2.3cm,
+  },
+  part/.style={component=sandbox, fill=white, text width=4.9cm, minimum height=1.2cm},
+  flow/.style={-{Stealth[length=6pt]}, very thick, draw=#1},
+  flow label/.style={font=\scriptsize, text=#1, align=left, inner sep=2pt},
+}
+
+\begin{document}
+\begin{tikzpicture}
+  % Front row: the four hops of a request.
+  \node[component=client] (client) at (0, 0)
+    {\boxtitle{SPring-8 (for example) client}web GUI or \texttt{r4} CLI/SDK\\files, instrument data};
+  \node[component=gateway] (gateway) at (6, 0)
+    {\boxtitle{Platform Gateway}NGINX + auth sidecar\\JWT check, rate limits,\\request-ID audit};
+  \node[component=server] (umrs) at (12, 0)
+    {\boxtitle{UMRS server}cluster front-end\\accounts, quotas, projects\\durable jobs\\model registry};
+  \node[component=store] (s3) at (18.2, 0)
+    {\boxtitle{Object storage (S3)}internal-only\\project buckets,\\per-attempt keyspaces};
+  \node[component=store, minimum height=1.8cm] (models) at (18.2, -2.6)
+    {\boxtitle{Pre-staged model store}weights never download\\at runtime};
+
+  % Compute node: one sandbox per endpoint/job.
+  \node[font=\footnotesize\bfseries, text=sandbox!70!black] (sandbox title) at (10, -5.0)
+    {Slurm compute node: one mini-RiVault sandbox per endpoint/job
+     \,$\cdot$\, offline at boot \,$\cdot$\, fail-closed egress};
+  \node[part] (mounts) at (4, -6.2)
+    {\boxtitle{Read-only mounts}weights, project data, RAG index};
+  \node[part] (scratch) at (10, -6.2)
+    {\boxtitle{Writable: tmpfs /scratch only}ephemeral per attempt};
+  \node[part] (creds) at (16, -6.2)
+    {\boxtitle{Attempt-scoped credentials}no ambient credentials on the node};
+  \node[draw=sandbox, thick, rounded corners=3pt, inner sep=6pt,
+        fit=(sandbox title) (mounts) (scratch) (creds)] (sandbox) {};
+
+  % Control plane.
+  \draw[flow=gateway] (client) -- (gateway)
+    node[flow label=gateway, midway, above, align=center] {HTTPS + JWT\\control};
+  \draw[flow=gateway] (gateway) -- (umrs)
+    node[flow label=gateway, midway, above, align=center] {verified\\identity};
+
+  % Data plane and job launch.
+  \draw[flow=sandbox] ([xshift=5mm]client.south) |- (6, -1.8) -| ([xshift=-10mm]umrs.south);
+  \node[flow label=sandbox, below] at (6, -1.8)
+    {\step{1} ZMQ data plane: CURVE-encrypted, ZAP-authenticated};
+  \draw[flow=server] ([yshift=3mm]umrs.east) -- ([yshift=3mm]s3.west)
+    node[flow label=server, midway, above, align=center] {\step{2} server-side\\staging};
+  \draw[flow=gateway] (umrs.south) -- (umrs.south |- sandbox.north);
+  \node[flow label=gateway, anchor=east] at (11.9, -3.5)
+    {\step{3} \texttt{sbatch}: job spec +\\attempt credentials};
+  \draw[flow=server, {Stealth[length=6pt]}-{Stealth[length=6pt]}]
+    ([yshift=-3mm]s3.west) -| (15.2, 0 |- sandbox.north);
+  \node[flow label=server, anchor=east] at (15.1, -3.5)
+    {\step{4} presigned /\\STS access};
+  \draw[flow=store] (models.south) -- (models.south |- sandbox.north)
+    node[flow label=store, midway, left] {read-only mount};
+
+  % Results.
+  \draw[flow=client] (sandbox.west) -| (client.south);
+  \node[flow label=client, anchor=west] at (0.1, -3.5)
+    {\step{5} results $\to$ S3 attempt keyspace\\
+     $\to$ Gateway audited download\\
+     $\to$ TTL URL to client};
+\end{tikzpicture}
+\end{document}
